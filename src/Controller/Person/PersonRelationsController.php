@@ -32,8 +32,13 @@ final class PersonRelationsController extends ElementRelationsBaseController
      */
     public function getEntities(Request $request, Response $response, array $args): Response
     {
-        // @TODO
-        return Error::error($response, 501);
+        $elementData = [
+            'entityName' => Person::class,
+            'elementId' => $args['personId'],
+            'getter' => 'getEntities',
+            'stuff' => 'entities',
+        ];
+        return $this->getElements($response, $elementData);
     }
 
     /**
@@ -48,8 +53,15 @@ final class PersonRelationsController extends ElementRelationsBaseController
      */
     public function operationEntity(Request $request, Response $response, array $args): Response
     {
-        // @TODO
-        return Error::error($response, 501);
+        $elementData = [
+            'entityName' => Person::class,
+            'elementId' => $args['personId'],
+            'stuffEName' => Entity::class,
+            'stuffId' => $args['stuffId'],
+            'getter' => 'getEntity',
+            'stuff' => 'entities',
+        ];
+        return $this->operationStuff($request, $response, $elementData);
     }
 
     /**
@@ -62,8 +74,13 @@ final class PersonRelationsController extends ElementRelationsBaseController
      */
     public function getProducts(Request $request, Response $response, array $args): Response
     {
-        // @TODO
-        return Error::error($response, 501);
+        $elementData = [
+            'entityName' => Person::class,
+            'elementId' => $args['personId'],
+            'getter' => 'getProducts',
+            'stuff' => 'products',
+        ];
+        return $this->getElements($response, $elementData);
     }
 
     /**
@@ -77,7 +94,14 @@ final class PersonRelationsController extends ElementRelationsBaseController
      */
     public function operationProduct(Request $request, Response $response, array $args): Response
     {
-        // @TODO
-        return Error::error($response, 501);
+        $elementData = [
+            'entityName' => Person::class,
+            'elementId' => $args['personId'],
+            'stuffEName' => Product::class,
+            'stuffId' => $args['stuffId'],
+            'getter' => 'getProducts',
+            'stuff' => 'products',
+        ];
+        return $this->operationStuff($request, $response, $elementData);
     }
 }

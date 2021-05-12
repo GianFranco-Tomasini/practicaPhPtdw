@@ -32,8 +32,13 @@ final class EntityRelationsController extends ElementRelationsBaseController
      */
     public function getPersons(Request $request, Response $response, array $args): Response
     {
-        // @TODO
-        return Error::error($response, 501);
+        $elementData = [
+            'entityName' => Entity::class,
+            'elementId' => $args['entityId'],
+            'getter' => 'getPersons',
+            'stuff' => 'persons',
+        ];
+        return $this->getElements($response, $elementData);
     }
 
 
@@ -49,8 +54,15 @@ final class EntityRelationsController extends ElementRelationsBaseController
      */
     public function operationPerson(Request $request, Response $response, array $args): Response
     {
-        // @TODO
-        return Error::error($response, 501);
+        $elementData = [
+            'entityName' => Entity::class,
+            'elementId' => $args['entityId'],
+            'stuffEName' => Person::class,
+            'stuffId' => $args['stuffId'],
+            'getter' => 'getPersons',
+            'stuff' => 'persons',
+        ];
+        return $this->operationStuff($request, $response, $elementData);
     }
 
     /**
@@ -63,8 +75,13 @@ final class EntityRelationsController extends ElementRelationsBaseController
      */
     public function getProducts(Request $request, Response $response, array $args): Response
     {
-        // @TODO
-        return Error::error($response, 501);
+        $elementData = [
+            'entityName' => Entity::class,
+            'elementId' => $args['entityId'],
+            'getter' => 'getProducts',
+            'stuff' => 'products',
+        ];
+        return $this->getElements($response, $elementData);
     }
 
     /**
@@ -78,7 +95,14 @@ final class EntityRelationsController extends ElementRelationsBaseController
      */
     public function operationProduct(Request $request, Response $response, array $args): Response
     {
-        // @TODO
-        return Error::error($response, 501);
+        $elementData = [
+            'entityName' => Entity::class,
+            'elementId' => $args['entityId'],
+            'stuffEName' => Product::class,
+            'stuffId' => $args['stuffId'],
+            'getter' => 'getProducts',
+            'stuff' => 'products',
+        ];
+        return $this->operationStuff($request, $response, $elementData);
     }
 }

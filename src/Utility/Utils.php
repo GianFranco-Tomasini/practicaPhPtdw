@@ -37,8 +37,8 @@ trait Utils
         }
 
         // Load environment variables from .env file
-        if (file_exists($dir . '/.env.local')) {
-            $dotenv = Dotenv::createMutable($dir, '.env.local');
+        if (file_exists($dir . '/.env')) {
+            $dotenv = Dotenv::createMutable($dir, '.env');
             $dotenv->load();
         } else {
             fwrite(STDERR, 'ERROR: no existe el fichero .env' . PHP_EOL);
