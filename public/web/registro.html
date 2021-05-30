@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="./style.css"/>
+        <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+        <script type="text/javascript" src="./javascript.js"></script>
+        <title>Anales de la ciencia</title>
+    </head>
+    <body">
+        <header>
+            <h1 class="text-center">Anales de la ciencia</h1>
+        </header>
+        <main>
+            <div class="container">
+                <div class="card">
+                    <div class="card-body" id="contenedorFormulario">
+                        <h2 class="text-center">Registro</h2>
+                        <form><!-- onsubmit=... -->
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" id="nombre" name="nombre" class="form-control">
+                            <label for="fechaN" class="form-label">Fecha nacimiento</label>
+                            <input type="date" id="fechaN" name="fechaN" class="form-control">
+                            <label for="correo" class="form-label">Correo electrónico</label>
+                            <input type="email" id="correo" name="correo" class="form-control">
+                            <label for="contraseña" class="form-label">Contraseña</label>
+                            <input type="password" id="contraseña" name="contraseña" class="form-control">
+                            <label for="confirmacion" class="form-label">Confirmación de contraseña</label>
+                            <input type="password" id="confirmacion" name="confirmacion" class="form-control">
+                            <br>
+                            <div class="text-center">
+                                <input type="submit" id="crearUsuario" name="crearUsuario" value="Crear usuario" class="btn btn-secondary">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </body>
+</html>

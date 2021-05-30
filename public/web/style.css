@@ -1,0 +1,43 @@
+.card{
+    background-color:#e4fcff;
+    border: 1px solid black;
+
+}
+
+h1{
+    margin-top: 15px;
+}
+
+p{
+    font-size: large;
+}
+
+#imagen{
+    margin-bottom: 10px;
+}
+
+#tarjetalogin{
+    margin: 20px;
+}
+
+.enlace{
+    font-size: large;
+    margin-bottom: 20px;
+}
+
+.nombreElemento{
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.btn-primary{
+    background-color: rgb(122, 155, 224);
+    border: 1px solid black;
+}
+
+.btn-secondary{
+    background-color: rgb(122, 155, 224);
+}
+.btn-secondary:hover{
+    background-color: rgb(76, 125, 230);
+}
