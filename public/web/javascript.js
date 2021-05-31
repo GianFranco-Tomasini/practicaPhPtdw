@@ -1,28 +1,15 @@
+let logeado = JSON.parse(window.localStorage.getItem("login"));
+
 function cargarPrincipal(){
-    window.localStorage.removeItem("nombreElemento");
-    window.localStorage.removeItem("tipoElemento");
+    window.localStorage.removeItem("elementType");
+    window.localStorage.removeItem("elementId");
     window.localStorage.removeItem("editar");
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
-    if(!datos){
-        datos = {
-            personas:[
-                {nombre: "Persona ejemplo", fechaI: "2000-04-01", fechaF: "2000-02-02", img:"https://upload.wikimedia.org/wikipedia/commons/9/95/Wikipedia-es-logo-black-on-white.png", wiki:"https://www.wikipedia.org/"},
-                {nombre: "Tim Berners-Lee", fechaI: "1955-06-08", fechaF: "2050-01-02", img: "https://upload.wikimedia.org/wikipedia/commons/4/4e/Sir_Tim_Berners-Lee_%28cropped%29.jpg", wiki: "https://es.wikipedia.org/wiki/Tim_Berners-Lee"},
-                ],
-            productos:[
-                {nombre: "Producto ejemplo", fechaI: "2000-01-01", fechaF: "2000-02-02", img:"https://upload.wikimedia.org/wikipedia/commons/9/95/Wikipedia-es-logo-black-on-white.png", wiki:"https://www.wikipedia.org/", personas: ["Persona ejemplo"], entidades: ["Entidad ejemplo"]},
-                {nombre: "C", fechaI: "1972", fechaF: "", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/The_C_Programming_Language_logo.svg/1024px-The_C_Programming_Language_logo.svg.png", wiki:"https://es.wikipedia.org/wiki/C_(lenguaje_de_programaci%C3%B3n)"},
-                ],
-            entidades:[
-                {nombre: "Entidad ejemplo", fechaI: "2000-01-01", fechaF: "2000-02-02", img:"https://upload.wikimedia.org/wikipedia/commons/9/95/Wikipedia-es-logo-black-on-white.png", wiki:"https://www.wikipedia.org/", personas: ["Persona ejemplo"]},
-                ],
-        }
-        window.localStorage.setItem("datos", JSON.stringify(datos)); 
-    }
-    cargarTabla();
-    let logeado = window.localStorage.getItem("login");
+    let logeado = JSON.parse(window.localStorage.getItem("login"));
     if(logeado){
         mostrarWriter();
+        cargarPersonas(logeado);
+        cargarProductos(logeado);
+        cargarEntidades(logeado);
     }
     else{
         ocultarWriter(); 
@@ -46,6 +33,9 @@ function onLogin(event){
             if(esWriter(authHeader)){
                 mostrarWriter();
             }
+            cargarPersonas(authHeader);
+            cargarProductos(authHeader);
+            cargarEntidades(authHeader);
         }).fail(function (xhr) {
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 message = xhr.responseJSON.message;
@@ -178,84 +168,106 @@ function mostrarWriter(){
 
 //  Carga elementos
 
-function cargarTabla(){
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
-    let div = document.getElementById("divPer");
-    for(persona of datos.personas){
-        cargarElementoBasico(div, persona);
-        div.innerHTML += "<br>";
-    }
-    div = document.getElementById("divProd");
-    for(producto of datos.productos){
-        cargarElementoBasico(div, producto);
-        div.innerHTML += "<br>";
-    }
-    div = document.getElementById("divEnt");
-    for(entidad of datos.entidades){
-        cargarElementoBasico(div, entidad);
-        div.innerHTML += "<br>";
-    }
+function cargarPersonas(authHeader){
+    $.ajax({
+        type: "GET",
+        url: "/api/v1/persons",
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            let div = document.getElementById("divPer");
+            for(person of data.persons){
+                cargarElementoBasico(div, person.person, "persons");
+                div.innerHTML += "<br>";
+            }
+        }
+    })
 }
 
-function cargarElementoBasico(div, elemento){
+function cargarProductos(authHeader){
+    $.ajax({
+        type: "GET",
+        url: "/api/v1/products",
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            let div = document.getElementById("divProd");
+            for(product of data.products){
+                cargarElementoBasico(div, product.product, "products");
+                div.innerHTML += "<br>";
+            }
+        }
+    })
+}
+
+function cargarEntidades(authHeader){
+    $.ajax({
+        type: "GET",
+        url: "/api/v1/entities",
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            let div = document.getElementById("divEnt");
+            for(entity of data.entities){
+                cargarElementoBasico(div, entity.entity, "entities");
+                div.innerHTML += "<br>";
+            }
+        }
+    })
+}
+
+function cargarElementoBasico(div, elemento, tipo){
     let contenedor = document.createElement("div");
     contenedor.setAttribute("class", "card");
     div.appendChild(contenedor);
     let contenido = document.createElement("div");
     contenido.setAttribute("class", "card-body text-center");
+    contenido.setAttribute("data-id", elemento.id);
+    contenido.setAttribute("data-type", tipo);
     contenedor.appendChild(contenido);
     let nombre = document.createElement("a");
     nombre.setAttribute("class", "nombreElemento");
     nombre.setAttribute("href", "./verElemento.html");
-    switch(div.id){
-        case "divPer":
-            nombre.setAttribute("data-tipoelemento", "persona");
-            break;
-        case "divProd":
-            nombre.setAttribute("data-tipoelemento", "producto");
-            break;
-        case "divEnt":
-            nombre.setAttribute("data-tipoelemento", "entidad");
-            break;
-    }
     nombre.setAttribute("onclick", "verElemento(event);");
-    nombre.innerHTML = elemento.nombre;
+    nombre.innerHTML = elemento.name;
     contenido.appendChild(nombre);
     let img = document.createElement("img");
-    img.setAttribute("src", elemento.img);
+    img.setAttribute("src", elemento.imageUrl);
     img.setAttribute("width", "50");
     img.setAttribute("heigth", "50");
     contenido.appendChild(img);
     crearBotones(contenedor);
 }
 
-function cargarDatosComunes(div, elemento){
+function cargarDatosComunes(div, elemento, elementType){
     let item = document.createElement("div");
     item.setAttribute("class", "card");
     div.appendChild(item);
     let body = document.createElement("div");
     body.setAttribute("class", "card-body text-center");
+    body.setAttribute("data-id", elemento.id);
+    body.setAttribute("data-type", elementType);
     item.appendChild(body);
     let nombre = document.createElement("h3");
     nombre.setAttribute("class", "text-center");
     body.appendChild(nombre);
-    nombre.innerHTML = elemento.nombre;
+    nombre.innerHTML = elemento.name;
     body.innerHTML += "<br>";
     let fechaI = document.createElement("p");
-    fechaI.innerHTML = "Fecha nacimiento: " + elemento.fechaI;
+    fechaI.innerHTML = "Fecha nacimiento: " + elemento.birthDate;
     body.appendChild(fechaI);
     let fechaF = document.createElement("p");
-    fechaF.innerHTML = "Fecha defunción: " + elemento.fechaF;
+    fechaF.innerHTML = "Fecha defunción: " + elemento.deathDate;
     body.appendChild(fechaF);
     let img = document.createElement("img");
     img.setAttribute("id","imagen");
-    img.setAttribute("src", elemento.img);
+    img.setAttribute("src", elemento.imageUrl);
     img.setAttribute("width", "100");
     img.setAttribute("heigth", "100");
     body.appendChild(img);
     body.innerHTML += "<br>";
     let link = document.createElement("a");
-    link.setAttribute("href", elemento.wiki);
+    link.setAttribute("href", elemento.wikiUrl);
     link.innerHTML = "Wiki";
     body.appendChild(link);
     crearBotones(item);
@@ -291,76 +303,130 @@ function crearBotonEliminar(div){
 }
 
 function verElemento(event){
-    window.localStorage.setItem("nombreElemento", event.target.innerHTML);
-    window.localStorage.setItem("tipoElemento", event.target.getAttribute("data-tipoElemento"));
+    window.localStorage.setItem("elementId", event.target.parentNode.getAttribute("data-id"));
+    window.localStorage.setItem("elementType", event.target.parentNode.getAttribute("data-type"));
+}
+
+function verElementoEnlazado(event){
+    window.localStorage.setItem("elementId", event.target.getAttribute("data-id"));
+    window.localStorage.setItem("elementType", event.target.getAttribute("data-type"));
 }
 
 function cargarPagDetalles(){
-    cargarElementoDetalles();
-    let logeado = window.localStorage.getItem("login");
+    let logeado = JSON.parse(window.localStorage.getItem("login"));
     if(logeado){
         mostrarWriter();
+        cargarElementoDetalles(logeado);
     }
     else{
-        ocultarWriter(); 
+        ocultarWriter();
+        //mensaje: login para ver elemento
     }
 }
 
-function cargarElementoDetalles(){
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
-    let nombre = window.localStorage.getItem("nombreElemento");
-    let tipoElemento= window.localStorage.getItem("tipoElemento");
+function cargarElementoDetalles(authHeader){
+    let elementId = window.localStorage.getItem("elementId");
+    let elementType = window.localStorage.getItem("elementType");
     let div = document.getElementById("elemento");
-    let elemento;
-    switch(tipoElemento){
-        case "persona":
-            elemento = datos.personas.find(x => x.nombre === nombre);
-            break;
-        case "producto":
-            elemento = datos.productos.find(x => x.nombre === nombre);
-            break;
-        case "entidad":
-            elemento = datos.entidades.find(x => x.nombre === nombre);
-            break;
-    }
-    cargarDatosComunes(div, elemento);
-    cargarRelaciones(div.firstElementChild.firstElementChild, elemento);
+    $.ajax({
+        type: "GET",
+        url: '/api/v1/' + elementType + '/' + elementId,
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            cargarDatosComunes(div, data[Object.keys(data)[0]], elementType);
+            cargarRelaciones(div.firstElementChild.firstElementChild, data[Object.keys(data)[0]], authHeader);
+        }
+    })
 }
 
-function cargarRelaciones(div, elemento){
-    if(elemento.personas!=null){
-        let part1 = document.createElement("p");
-        div.appendChild(part1);
-        part1.innerHTML = "Personas participantes:";
-        for(persona of elemento.personas){
+function cargarRelaciones(div, element, authHeader){
+    cargarPersonasRelacionadas(div, element, authHeader);
+    cargarProductosRelacionados(div, element, authHeader);
+    cargarEntidadesRelacionadas(div, element, authHeader);
+}
+
+function cargarPersonasRelacionadas(div, element, authHeader){
+    if(element.persons!=null){
+        let texto = document.createElement("p");
+        div.appendChild(texto);
+        texto.innerHTML = "Personas participantes:";
+        for(person of element.persons){
+            $.ajax({
+                type: "GET",
+                url: '/api/v1/persons/' + person,
+                headers: {"Authorization": authHeader},
+                // dataType: 'json',
+                success: function (data) {
+                    personahtml.innerHTML = data.person.name;
+                    personahtml.setAttribute("data-id", data.person.id);
+                }
+            })
             let personahtml = document.createElement("a");
             div.appendChild(personahtml);
-            personahtml.innerHTML = persona;
             personahtml.setAttribute("class", "enlace");
             personahtml.setAttribute("href", "./verElemento.html");
-            personahtml.setAttribute("data-tipoelemento", "persona");
-            personahtml.setAttribute("onclick", "verElemento(event);");
+            personahtml.setAttribute("data-type", "persons");
+            personahtml.setAttribute("onclick", "verElementoEnlazado(event);");
         }
     }
-    if(elemento.entidades!=null){
-        let part2 = document.createElement("p");
-        part2.innerHTML = "Entidades participantes:";
-        div.appendChild(part2);
-        for(entidad of elemento.entidades){
-            let entidadhtml = document.createElement("a");
-            div.appendChild(entidadhtml);
-            entidadhtml.innerHTML = entidad;
-            entidadhtml.setAttribute("class", "enlace");
-            entidadhtml.setAttribute("href", "./verElemento.html");
-            entidadhtml.setAttribute("data-tipoelemento", "entidad");
-            entidadhtml.setAttribute("onclick", "verElemento(event);");
+}
+
+function cargarProductosRelacionados(div, element, authHeader){
+    if(element.products!=null){
+        let texto = document.createElement("p");
+        texto.innerHTML = "Productos relacionados:";
+        div.appendChild(texto);
+        for(product of element.products){
+            $.ajax({
+                type: "GET",
+                url: '/api/v1/products/' + product,
+                headers: {"Authorization": authHeader},
+                // dataType: 'json',
+                success: function (data) {
+                    productohtml.innerHTML = data.product.name;
+                    productohtml.setAttribute("data-id", data.product.id);
+                }
+            })
+            let productohtml = document.createElement("a");
+            div.appendChild(productohtml);
+            productohtml.setAttribute("class", "enlace");
+            productohtml.setAttribute("href", "./verElemento.html");
+            productohtml.setAttribute("data-type", "products");
+            productohtml.setAttribute("onclick", "verElementoEnlazado(event);");
         }
     } 
 }
 
+function cargarEntidadesRelacionadas(div, element, authHeader){
+    if(element.entities!=null){
+        let texto = document.createElement("p");
+        texto.innerHTML = "Entidades participantes:";
+        div.appendChild(texto);
+        for(entidad of element.entities){
+            $.ajax({
+                type: "GET",
+                url: '/api/v1/entities/' + entity,
+                headers: {"Authorization": authHeader},
+                // dataType: 'json',
+                success: function (data) {
+                    productohtml.innerHTML = data.entity.name;
+                    productohtml.setAttribute("data-id", data.entity.id);
+                }
+            })
+            let entidadhtml = document.createElement("a");
+            div.appendChild(entidadhtml);
+            entidadhtml.setAttribute("class", "enlace");
+            entidadhtml.setAttribute("href", "./verElemento.html");
+            entidadhtml.setAttribute("data-type", "entities");
+            entidadhtml.setAttribute("onclick", "verElementoEnlazado(event);");
+        }
+    }
+}
+
 function cargarPagCreacion(){
     let div = document.getElementById("contenedorFormulario");
-    let tipoElemento = window.localStorage.getItem("tipoElemento");
+    let tipoElemento = window.localStorage.getItem("elementType");
     let formulario = document.createElement("form");
     formulario.setAttribute("onsubmit", "crearElemento(event, this);");
     formulario.setAttribute("id", "formularioEdicion");
@@ -373,17 +439,20 @@ function cargarPagCreacion(){
     crearInput(formulario, "imageUrl", "Link imagen", "url");
     crearInput(formulario, "wikiUrl", "Link wiki", "url");
     switch(tipoElemento){
-        case "producto":
+        case "products":
             titulo.innerHTML = "Crear producto";
-            mostrarPersonas(formulario);
-            mostrarEntidades(formulario);
+            //mostrarPersonas(formulario);
+            //mostrarEntidades(formulario);
             break;
-        case "entidad":
+        case "entities":
             titulo.innerHTML = "Crear Entidad";
-            mostrarPersonas(formulario);
+            //mostrarPersonas(formulario);
+            //mostrarEntidades(formulario);
             break;
-        case "persona":
+        case "persons":
             titulo.innerHTML = "Crear persona";
+            //mostrarPersonas(formulario);
+            //mostrarEntidades(formulario);
             break;
     }
     formulario.innerHTML += "<br>";
@@ -480,128 +549,55 @@ function mostrarEntidades(div){
 // Modificaciones por parte del usuario
 
 function eliminarElemento(event){
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
+    event.preventDefault();
     let padre = event.target.parentNode.parentNode;
-    let tipoElemento = null;
-    if(document.URL.includes("/inicio.html")){
-        tipoElemento = padre.parentNode.id;
-    }
-    else{
-        tipoElemento = window.localStorage.getItem("tipoElemento");
-    }
-    let nombre = padre.firstElementChild.firstElementChild.innerHTML;
-    if(tipoElemento==="divPer" || tipoElemento=="persona"){
-        datos = eliminarProductosRelacionadosAPersona(nombre, datos);
-        datos = eliminarEntidadesRelacionadas(nombre, datos);
-        let index = datos.personas.map(function(x){return x.nombre}).indexOf(nombre);
-        datos.personas.splice(index, 1);
-    }
-    else if(tipoElemento==="divProd" || tipoElemento=="producto"){
-        let index = datos.productos.map(function(x){return x.nombre}).indexOf(nombre);
-        datos.productos.splice(index, 1);
-    }
-    else{
-        datos = eliminarProductosRelacionadosAEntidad(nombre, datos);
-        let index = datos.entidades.map(function(x){return x.nombre}).indexOf(nombre);
-        datos.entidades.splice(index, 1);
-    }
+    let idElement = padre.firstElementChild.getAttribute("data-id");
+    let typeElement = padre.firstElementChild.getAttribute("data-type");
+    $.ajax({
+        type: "DELETE",
+        url: '/api/v1/' + typeElement + '/' + idElement,
+        headers: {"Authorization": logeado},
+        // dataType: 'json',
+        success: function (data) {
+            //eliminar relaciones
+        }
+    })
     padre.remove();
-    window.localStorage.setItem("datos", JSON.stringify(datos)); 
-}
-
-function eliminarEntidadesRelacionadas(nombre, datos){
-    for(entidad of datos.entidades){
-        if(entidad.personas)
-            for(persona of entidad.personas){
-                if(persona === nombre){
-                    let index = datos.entidades.map(function(x){return x.nombre}).indexOf(entidad.nombre);
-                    datos.entidades.splice(index, 1);
-                }
-            }
-    }
-    return datos;
-}
-
-function eliminarProductosRelacionadosAPersona(nombre, datos){
-    for(producto of datos.productos){
-        if(producto.personas)
-            for(persona of producto.personas){
-                if(persona === nombre){
-                    let index = datos.productos.map(function(x){return x.nombre}).indexOf(producto.nombre);
-                    datos.productos.splice(index, 1);
-                }
-            }
-    }
-    return datos;
-}
-
-function eliminarProductosRelacionadosAEntidad(nombre, datos){
-    for(producto of datos.productos){
-        if(producto.entidades)
-            for(entidad of producto.entidades){
-                if(entidad === nombre){
-                    let index = datos.productos.map(function(x){return x.nombre}).indexOf(producto.nombre);
-                    datos.productos.splice(index, 1);
-                }
-            }
-    }
-    return datos;
 }
 
 function crearElemento(event, formulario){
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
-    let nombreAnterior = window.localStorage.getItem("nombreElemento");
-    let tipoElemento = window.localStorage.getItem("tipoElemento");
+    event.preventDefault();
+    let logeado = JSON.parse(window.localStorage.getItem("login"));
+    let tipoElemento = window.localStorage.getItem("elementType");
     let editar = window.localStorage.getItem("editar");
     let elemento = {
-        "nombre": formulario.nombre.value,
-        "fechaI": formulario.fechai.value,
-        "fechaF": formulario.fechaf.value,
-        "img": formulario.linkimg.value,
-        "wiki": formulario.linkwiki.value
+        "name": formulario.name.value,
+        "birthDate": formulario.birthDate.value,
+        "deathDate": formulario.deathDate.value,
+        "imageUrl": formulario.imageUrl.value,
+        "wikiUrl": formulario.wikiUrl.value
     };
+    
     if(editar){
-        datos = borrarAnterior(nombreAnterior, tipoElemento);
-        window.localStorage.setItem("nombreElemento", elemento.nombre);
-        window.localStorage.setItem("tipoElemento", tipoElemento);
+        //...
+        window.localStorage.setItem("elementName", elemento.nombre);
+        window.localStorage.setItem("elementType", tipoElemento);
     }
-    switch(tipoElemento){
-        case "persona":
-            datos.personas.push(elemento);
-            break;
-        case "producto":
-            elemento.personas = [formulario.personas.value];
-            elemento.entidades = [formulario.entidades.value];
-            datos.productos.push(elemento);
-            break;
-        case "entidad":
-            elemento.personas = [formulario.personas];
-            datos.entidades.push(elemento);
-            break;
-    }
-    window.localStorage.setItem("datos", JSON.stringify(datos)); 
+    pushElement(tipoElemento, elemento, logeado);
 }
 
-function borrarAnterior(nombreElemento, tipoElemento){
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
-    let index = null;
-    switch(tipoElemento){
-        case "persona":
-            index = datos.personas.map(function(x){return x.nombre}).indexOf(nombreElemento);
-            datos.personas.splice(index, 1);
-            break;
-        case "producto":
-            index = datos.productos.map(function(x){return x.nombre}).indexOf(nombreElemento);
-            datos.productos.splice(index, 1);
-            break;
-        case "entidad":
-            index = datos.entidades.map(function(x){return x.nombre}).indexOf(nombreElemento);
-            datos.entidades.splice(index, 1);
-            break;
-    }
-    return datos;
+function pushElement(elementType, element, authHeader){
+    $.ajax({
+        type: "POST",
+        url: '/api/v1/' + elementType,
+        headers: {"Authorization": authHeader},
+        data: element,
+        // dataType: 'json',
+        error: function (data) {
+            alert("Error al crear\n" + data);
+        }
+    })
 }
-
 
 function borrarLogin(){
     window.localStorage.removeItem("login");
@@ -610,58 +606,57 @@ function borrarLogin(){
 function setEditar(event){
     window.localStorage.setItem("editar", "true");
     if(document.URL.includes("/inicio.html")){
-        let padre = event.target.parentNode.parentNode;
-        let nombreElemento = padre.firstElementChild.firstElementChild.innerHTML;
-        let div = padre.parentNode.id;
-        let tipoElemento = null;
-        switch(div){
-            case "divPer":
-                tipoElemento = "persona";
-                break;
-            case "divProd":
-                tipoElemento = "producto";
-                break;
-            case "divEnt":
-                tipoElemento = "entidad";
-                break;
-        }
-        window.localStorage.setItem("nombreElemento", nombreElemento);
-        window.localStorage.setItem("tipoElemento", tipoElemento);
+        let nodo = event.target.parentNode.parentNode.firstElementChild;
+        window.localStorage.setItem("elementId", nodo.getAttribute("data-id"));
+        window.localStorage.setItem("elementType", nodo.getAttribute("data-type"));
     }
 }
 
 function elementoACrear(tipo){
-    window.localStorage.setItem("tipoElemento", tipo);
+    window.localStorage.setItem("elementType", tipo);
 }
 
 function editarElemento(){
-    let tipoElemento = window.localStorage.getItem("tipoElemento");
-    let nombreElemento = window.localStorage.getItem("nombreElemento");
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
-    let formulario = document.getElementById("formularioEdicion");
-    formulario.parentElement.firstElementChild.innerHTML = "Editar '" + nombreElemento + "'";
-    let elemento = null;
-    switch(tipoElemento){
-        case "persona":
-            elemento = datos.personas.find(x => x.nombre === nombreElemento);
-            break;
-        case "producto":
-            elemento = datos.productos.find(x => x.nombre === nombreElemento);
-            break;
-        case "entidad":
-            elemento = datos.entidades.find(x => x.nombre === nombreElemento);
-            break;
-    }
-    let inputs = formulario.getElementsByTagName("input");
-    let i = 0;
-    for(campo in elemento){
-        if(i<inputs.length && i<5){
-            inputs[i].setAttribute("value", elemento[campo]);
-        }
-        i++;
-    }
+    let logeado = JSON.parse(window.localStorage.getItem("login"));
+    let tipoElemento = window.localStorage.getItem("elementType");
+    let idElemento = window.localStorage.getItem("elementId");
+    getElementToEdit(tipoElemento, idElemento, logeado);
     botonActualizar = document.getElementById("submitElemento");
     botonActualizar.setAttribute("value", "Actualizar");
-    botonActualizar.setAttribute("onclick", "borrarAnterior(event)");
-    window.localStorage.setItem("datos", JSON.stringify(datos));
+    botonActualizar.setAttribute("onclick", "updateElement(event)");
+}
+
+function actualizarElemento(event){
+    let e_tag = JSON.parse(window.localStorage.getItem("E-tag"));
+    let elementType = window.localStorage.getItem("elementType");
+    let elementId = window.localStorage.getItem("elementId");
+    $.ajax({
+        type: "PUT",
+        url: '/api/v1/' + elementType + '/' + elementId,
+        headers: {"Authorization": authHeader, "etag": e_tag},
+        // dataType: 'json',
+        success: function (data) {
+            //...
+        }
+    })
+}
+
+function getElementToEdit(elementType, elementId, authHeader){
+    let jqXHR = $.ajax({
+        type: "GET",
+        url: '/api/v1/' + elementType + '/' + elementId,
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            window.localStorage.setItem("E-tag", JSON.stringify(jqXHR.getResponseHeader('etag')));
+            let elemento = data[Object.keys(data)[0]];
+            let formulario = document.getElementById("formularioEdicion");
+            formulario.parentElement.firstElementChild.innerHTML = "Editar '" + elemento.name + "'";
+            document.getElementById("name").setAttribute("value", elemento.name);
+            document.getElementById("birthDate").setAttribute("value", elemento.birthDate);
+            document.getElementById("deathDate").setAttribute("value", elemento.deathDate);
+            document.getElementById("wikiUrl").setAttribute("value", elemento.wikiUrl);
+            document.getElementById("imageUrl").setAttribute("value", elemento.imageUrl);
+        }
+    })
 }
