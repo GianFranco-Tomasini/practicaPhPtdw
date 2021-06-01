@@ -4,12 +4,15 @@ function cargarPrincipal(){
     window.localStorage.removeItem("elementType");
     window.localStorage.removeItem("elementId");
     window.localStorage.removeItem("editar");
+    window.localStorage.removeItem("E-tag");
     let logeado = JSON.parse(window.localStorage.getItem("login"));
     if(logeado){
-        mostrarWriter();
+        if(esWriter(logeado))
+            mostrarWriter();
         cargarPersonas(logeado);
         cargarProductos(logeado);
         cargarEntidades(logeado);
+        crearBotonLogout();
     }
     else{
         ocultarWriter(); 
@@ -29,7 +32,7 @@ function onLogin(event){
             // => show scopes, users, products, ...
             authHeader = request.getResponseHeader('Authorization');
             window.localStorage.setItem("login", JSON.stringify(authHeader)); 
-            console.log(data);
+            crearBotonLogout();
             if(esWriter(authHeader)){
                 mostrarWriter();
             }
@@ -84,20 +87,8 @@ function crearFormularioLogin(){
     inp.setAttribute("type", "submit");
     inp.setAttribute("value", "Iniciar sesión");
     formulario.append(inp);
-    crearBotonRegistro(formulario);
     div.appendChild(formulario);
 }
-
-function crearBotonRegistro(div){
-    let registro = document.createElement("a");
-    registro.setAttribute("id", "registro");
-    registro.setAttribute("class", "btn btn-primary");
-    registro.setAttribute("role", "button");
-    registro.setAttribute("href", "./registro.html");
-    registro.innerHTML = "Registrarse";
-    div.appendChild(registro);
-}
-
 
 function crearUserdiv(div){
     let ud = document.createElement("div");
@@ -163,7 +154,6 @@ function mostrarWriter(){
     for(b of botones){
         b.style.display = "block";
     }
-    crearBotonLogout();
 }
 
 //  Carga elementos
@@ -403,15 +393,15 @@ function cargarEntidadesRelacionadas(div, element, authHeader){
         let texto = document.createElement("p");
         texto.innerHTML = "Entidades participantes:";
         div.appendChild(texto);
-        for(entidad of element.entities){
+        for(entity of element.entities){
             $.ajax({
                 type: "GET",
                 url: '/api/v1/entities/' + entity,
                 headers: {"Authorization": authHeader},
                 // dataType: 'json',
                 success: function (data) {
-                    productohtml.innerHTML = data.entity.name;
-                    productohtml.setAttribute("data-id", data.entity.id);
+                    entidadhtml.innerHTML = data.entity.name;
+                    entidadhtml.setAttribute("data-id", data.entity.id);
                 }
             })
             let entidadhtml = document.createElement("a");
@@ -428,39 +418,47 @@ function cargarPagCreacion(){
     let div = document.getElementById("contenedorFormulario");
     let tipoElemento = window.localStorage.getItem("elementType");
     let formulario = document.createElement("form");
-    formulario.setAttribute("onsubmit", "crearElemento(event, this);");
     formulario.setAttribute("id", "formularioEdicion");
+    formulario.setAttribute("method", "POST");
     let titulo = document.createElement("h3");
     titulo.setAttribute("class", "text-center");
     div.appendChild(titulo);
-    crearInput(formulario, "name", "Nombre", "text");
-    crearInput(formulario, "birthDate", "Fecha nacimiento", "date");
-    crearInput(formulario, "deathDate", "Fecha defunción", "date");
-    crearInput(formulario, "imageUrl", "Link imagen", "url");
-    crearInput(formulario, "wikiUrl", "Link wiki", "url");
+    let divInputs = document.createElement("div");
+    divInputs.setAttribute("id", "divInputs");
+    formulario.appendChild(divInputs);
+    let divBotones = document.createElement("div");
+    divBotones.setAttribute("class", "text-center");
+    formulario.appendChild(divBotones);
+    crearBotonesFormulario(divBotones);
+    crearInput(divInputs, "name", "Nombre", "text");
+    crearInput(divInputs, "birthDate", "Fecha nacimiento", "date");
+    crearInput(divInputs, "deathDate", "Fecha defunción", "date");
+    crearInput(divInputs, "imageUrl", "Link imagen", "url");
+    crearInput(divInputs, "wikiUrl", "Link wiki", "url");
     switch(tipoElemento){
         case "products":
             titulo.innerHTML = "Crear producto";
-            //mostrarPersonas(formulario);
-            //mostrarEntidades(formulario);
+            mostrarPersonas(divInputs);
+            mostrarEntidades(divInputs);
             break;
         case "entities":
-            titulo.innerHTML = "Crear Entidad";
-            //mostrarPersonas(formulario);
-            //mostrarEntidades(formulario);
+            titulo.innerHTML = "Crear entidad";
+            mostrarPersonas(divInputs);
+            mostrarProductos(divInputs);
             break;
         case "persons":
             titulo.innerHTML = "Crear persona";
-            //mostrarPersonas(formulario);
-            //mostrarEntidades(formulario);
+            mostrarProductos(divInputs);
+            mostrarEntidades(divInputs);
             break;
     }
-    formulario.innerHTML += "<br>";
-    crearBotonesFormulario(formulario);
     div.appendChild(formulario);
     let editar = window.localStorage.getItem("editar");
     if(editar){
         editarElemento();
+    }
+    else{
+        formulario.setAttribute("onsubmit", "crearElemento(event, this);");
     }
 }
 
@@ -479,71 +477,19 @@ function crearInput(div, id, nombre, tipo){
 }
 
 function crearBotonesFormulario(formulario){
-    let div = document.createElement("div");
-    div.setAttribute("class", "text-center");
-    formulario.appendChild(div);
+    formulario.innerHTML += "<br>";
     let reset = document.createElement("input");
     reset.setAttribute("type", "reset");
     reset.setAttribute("id", "reiniciarElemento");
-    reset.setAttribute("name", "reiniciarElemento");
     reset.setAttribute("value", "Reiniciar");
     reset.setAttribute("class", "btn btn-secondary");
-    div.appendChild(reset);
+    formulario.appendChild(reset);
     let submit = document.createElement("input");
     submit.setAttribute("type", "submit");
     submit.setAttribute("id", "submitElemento");
-    submit.setAttribute("name", "submitElemento");
     submit.setAttribute("value", "Crear");
     submit.setAttribute("class", "btn btn-secondary");
-    div.appendChild(submit);
-}
-
-function mostrarPersonas(div){
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
-    let label = document.createElement("label");
-    label.setAttribute("for", "personas");
-    label.setAttribute("class", "form-label");
-    label.innerHTML = "Personas participantes"
-    div.appendChild(label);
-    let select = document.createElement("select");
-    select.setAttribute("id", "personas");
-    select.setAttribute("name", "personas");
-    select.setAttribute("class", "form-select");
-    div.appendChild(select);
-    let opcion = document.createElement("option");
-    opcion.setAttribute("value", "null");
-    opcion.innerHTML = "Ninguno";
-    select.appendChild(opcion);
-    for(persona of datos.personas){
-        opcion = document.createElement("option");
-        opcion.setAttribute("value", persona.nombre);
-        opcion.innerHTML = persona.nombre;
-        select.appendChild(opcion);
-    }
-}
-
-function mostrarEntidades(div){
-    let datos = JSON.parse(window.localStorage.getItem("datos"));
-    let label = document.createElement("label");
-    label.setAttribute("for", "entidades");
-    label.setAttribute("class", "form-label");
-    label.innerHTML = "Entidades participantes"
-    div.appendChild(label);
-    let select = document.createElement("select");
-    select.setAttribute("id", "entidades");
-    select.setAttribute("name", "entidades");
-    select.setAttribute("class", "form-select");
-    div.appendChild(select);
-    let opcion = document.createElement("option");
-    opcion.setAttribute("value", "null");
-    opcion.innerHTML = "Ninguno";
-    select.appendChild(opcion);
-    for(entidad of datos.entidades){
-        opcion = document.createElement("option");
-        opcion.setAttribute("value", entidad.nombre);
-        opcion.innerHTML = entidad.nombre;
-        select.appendChild(opcion);
-    }
+    formulario.appendChild(submit);
 }
 
 // Modificaciones por parte del usuario
@@ -569,21 +515,23 @@ function crearElemento(event, formulario){
     event.preventDefault();
     let logeado = JSON.parse(window.localStorage.getItem("login"));
     let tipoElemento = window.localStorage.getItem("elementType");
-    let editar = window.localStorage.getItem("editar");
     let elemento = {
         "name": formulario.name.value,
         "birthDate": formulario.birthDate.value,
         "deathDate": formulario.deathDate.value,
         "imageUrl": formulario.imageUrl.value,
-        "wikiUrl": formulario.wikiUrl.value
+        "wikiUrl": formulario.wikiUrl.value,
     };
-    
-    if(editar){
-        //...
-        window.localStorage.setItem("elementName", elemento.nombre);
-        window.localStorage.setItem("elementType", tipoElemento);
-    }
     pushElement(tipoElemento, elemento, logeado);
+}
+
+function addRelation(elementId, elementType, elementId2, elementType2, authHeader){
+    $.ajax({
+        type: "PUT",
+        url: '/api/v1/' + elementType + '/' + elementId + '/' + elementType2 + '/add/' + elementId2,
+        headers: {"Authorization": authHeader}
+        // dataType: 'json',
+    })
 }
 
 function pushElement(elementType, element, authHeader){
@@ -594,13 +542,30 @@ function pushElement(elementType, element, authHeader){
         data: element,
         // dataType: 'json',
         error: function (data) {
-            alert("Error al crear\n" + data);
+            alert("Error al crear\n" + JSON.stringify(data));
+        },
+        success: function(data){
+            let form = document.getElementById("formularioEdicion");
+            if(form.products)
+                addRelation(data[Object.keys(data)[0]].id, elementType, form.products.value, 'products', authHeader);
+            if(form.entities)
+                addRelation(data[Object.keys(data)[0]].id, elementType, form.entities.value, 'entities', authHeader);
+            if(form.persons)
+                addRelation(data[Object.keys(data)[0]].id, elementType, form.persons.value, 'persons', authHeader);
         }
     })
 }
 
-function borrarLogin(){
-    window.localStorage.removeItem("login");
+function editarElemento(){
+    let logeado = JSON.parse(window.localStorage.getItem("login"));
+    let tipoElemento = window.localStorage.getItem("elementType");
+    let idElemento = window.localStorage.getItem("elementId");
+    getElementToEdit(tipoElemento, idElemento, logeado);
+    botonActualizar = document.getElementById("submitElemento");
+    botonActualizar.setAttribute("value", "Actualizar");
+    botonActualizar.setAttribute("onclick", "updateElement(event)");
+    let form = document.getElementById("formularioEdicion");
+    form.setAttribute("method", "PUT");
 }
 
 function setEditar(event){
@@ -612,33 +577,41 @@ function setEditar(event){
     }
 }
 
+function borrarLogin(){
+    window.localStorage.removeItem("login");
+}
+
 function elementoACrear(tipo){
     window.localStorage.setItem("elementType", tipo);
 }
 
-function editarElemento(){
-    let logeado = JSON.parse(window.localStorage.getItem("login"));
-    let tipoElemento = window.localStorage.getItem("elementType");
-    let idElemento = window.localStorage.getItem("elementId");
-    getElementToEdit(tipoElemento, idElemento, logeado);
-    botonActualizar = document.getElementById("submitElemento");
-    botonActualizar.setAttribute("value", "Actualizar");
-    botonActualizar.setAttribute("onclick", "updateElement(event)");
-}
-
-function actualizarElemento(event){
+function updateElement(event){
+    let formulario = document.getElementById("formularioEdicion");
+    event.preventDefault();
+    let authHeader = JSON.parse(window.localStorage.getItem("login"));
     let e_tag = JSON.parse(window.localStorage.getItem("E-tag"));
     let elementType = window.localStorage.getItem("elementType");
     let elementId = window.localStorage.getItem("elementId");
+    let element = {
+        "name": formulario.name.value,
+        "birthDate": formulario.birthDate.value,
+        "deathDate": formulario.deathDate.value,
+        "imageUrl": formulario.imageUrl.value,
+        "wikiUrl": formulario.wikiUrl.value,
+    }
+    //"products": formulario.products.value,
+    //"entities": formulario.entities.value
     $.ajax({
         type: "PUT",
         url: '/api/v1/' + elementType + '/' + elementId,
         headers: {"Authorization": authHeader, "etag": e_tag},
+        data: element,
         // dataType: 'json',
-        success: function (data) {
-            //...
+        error: function (data) {
+            alert("Error al actualizar\n" + JSON.stringify(data));
         }
     })
+    //set relaciones
 }
 
 function getElementToEdit(elementType, elementId, authHeader){
@@ -659,4 +632,194 @@ function getElementToEdit(elementType, elementId, authHeader){
             document.getElementById("imageUrl").setAttribute("value", elemento.imageUrl);
         }
     })
+}
+
+function mostrarPersonas(div){
+    let label = document.createElement("label");
+    label.setAttribute("for", "persons");
+    label.setAttribute("class", "form-label");
+    label.innerHTML = "Personas participantes";
+    div.appendChild(label);
+    let select = document.createElement("select");
+    select.setAttribute("id", "persons");
+    select.setAttribute("class", "form-select");
+    div.appendChild(select);
+    let opcion = document.createElement("option");
+    opcion.setAttribute("value", "null");
+    opcion.innerHTML = "Ninguno";
+    select.appendChild(opcion);
+    colocarPersonasRelacionadas(select);
+}
+
+function colocarPersonasRelacionadas(div){
+    let authHeader = JSON.parse(window.localStorage.getItem("login"));
+    $.ajax({
+        type: "GET",
+        url: '/api/v1/persons',
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            for(person of data.persons){
+                opcion = document.createElement("option");
+                opcion.setAttribute("value", person.person.id);
+                opcion.innerHTML = person.person.name;
+                div.appendChild(opcion);
+            }
+        }
+    })
+}
+
+function mostrarEntidades(div){
+    let label = document.createElement("label");
+    label.setAttribute("for", "entities");
+    label.setAttribute("class", "form-label");
+    label.innerHTML = "Entidades participantes";
+    div.appendChild(label);
+    let select = document.createElement("select");
+    select.setAttribute("id", "entities");
+    select.setAttribute("class", "form-select");
+    div.appendChild(select);
+    let opcion = document.createElement("option");
+    opcion.setAttribute("value", "null");
+    opcion.innerHTML = "Ninguno";
+    select.appendChild(opcion);
+    colocarEntidadesRelacionadas(select);
+}
+
+function colocarEntidadesRelacionadas(div){
+    let authHeader = JSON.parse(window.localStorage.getItem("login"));
+    $.ajax({
+        type: "GET",
+        url: '/api/v1/entities',
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            for(entity of data.entities){
+                opcion = document.createElement("option");
+                opcion.setAttribute("value", entity.entity.id);
+                opcion.innerHTML = entity.entity.name;
+                div.appendChild(opcion);
+            }
+        }
+    })
+}
+
+function mostrarProductos(div){
+    let label = document.createElement("label");
+    label.setAttribute("for", "products");
+    label.setAttribute("class", "form-label");
+    label.innerHTML = "Productos participantes";
+    div.appendChild(label);
+    let select = document.createElement("select");
+    select.setAttribute("id", "products");
+    select.setAttribute("class", "form-select");
+    div.appendChild(select);
+    let opcion = document.createElement("option");
+    opcion.setAttribute("value", "null");
+    opcion.innerHTML = "Ninguno";
+    select.appendChild(opcion);
+    colocarProductosRelacionados(select);
+}
+
+function colocarProductosRelacionados(div){
+    let authHeader = JSON.parse(window.localStorage.getItem("login"));
+    $.ajax({
+        type: "GET",
+        url: '/api/v1/products',
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            for(product of data.products){
+                opcion = document.createElement("option");
+                opcion.setAttribute("value", product.product.id);
+                opcion.innerHTML = product.product.name;
+                div.appendChild(opcion);
+            }
+        }
+    })
+}
+
+function createUser(event){
+    let authHeader = JSON.parse(window.localStorage.getItem("login"));
+    let form = document.getElementById("registerForm");
+    if(form.password.value === form.pwdconfirmation.value){
+        let user = {
+            "username": form.username.value,
+            "email": form.email.value,
+            "password": form.password.value,
+            "role": form.role.value
+        }
+        $.ajax({
+            type: "POST",
+            url: '/api/v1/users',
+            headers: {"Authorization": authHeader},
+            data: user
+        })
+    }
+    else{
+        alert("Las contraseñas no coinciden");
+    }
+}
+
+//funcionalidad usuarios
+
+function crearBotonRegistro(){
+    let div = document.getElementById("usuarios")
+    let registro = document.createElement("a");
+    registro.setAttribute("id", "registro");
+    registro.setAttribute("class", "btn btn-secondary");
+    registro.setAttribute("role", "button");
+    registro.setAttribute("href", "./registro.html");
+    registro.innerHTML = "Crear usuario";
+    div.appendChild(registro);
+}
+
+function crearBotonGestionUsuarios(){
+    let div = document.getElementById("usuarios")
+    let gestion = document.createElement("a");
+    gestion.setAttribute("id", "registro");
+    gestion.setAttribute("class", "btn btn-secondary");
+    gestion.setAttribute("role", "button");
+    gestion.setAttribute("href", "./gestionUsuarios.html");
+    gestion.innerHTML = "Gestionar usuarios";
+    div.appendChild(gestion);
+}
+
+function loadUsers(){
+    let authHeader = JSON.parse(window.localStorage.getItem("login"));
+    let div = document.getElementById("users");
+    $.ajax({
+        type: "GET",
+        url: '/api/v1/users',
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            alert(JSON.stringify(data));
+            for(user in data.users){
+                alert(JSON.stringify(user));
+                showUser(div, user);
+            }
+        }
+    })
+}
+
+function showUser(div, user){
+    let contenedor = document.createElement("div");
+    contenedor.setAttribute("class", "card");
+    div.appendChild(contenedor);
+    let contenido = document.createElement("div");
+    contenido.setAttribute("class", "card-body text-center");
+    contenido.setAttribute("data-id", user.id);
+    contenido.setAttribute("data-type", "user");
+    contenedor.appendChild(contenido);
+    let nombre = document.createElement("p");
+    nombre.innerHTML = user.username;
+    contenido.appendChild(nombre);
+    let email = document.createElement("p");
+    email.innerHTML = user.email;
+    contenido.appendChild(email);
+    let role = document.createElement("p");
+    role.innerHTML = user.role;
+    contenido.appendChild(role);
+    crearBotonEliminar(contenedor);
 }

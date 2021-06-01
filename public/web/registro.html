@@ -11,27 +11,33 @@
     </head>
     <body">
         <header>
-            <h1 class="text-center">Anales de la ciencia</h1>
+            <div class="text-center">
+                <h1>Anales de la ciencia</h1>
+                <a id="homebutton" class="btn btn-primary" href="./inicio.html" role="button">Volver</a>
+            </div>
         </header>
         <main>
             <div class="container">
                 <div class="card">
                     <div class="card-body" id="contenedorFormulario">
                         <h2 class="text-center">Registro</h2>
-                        <form><!-- onsubmit=... -->
-                            <label for="nombre" class="form-label">Nombre</label>
-                            <input type="text" id="nombre" name="nombre" class="form-control">
-                            <label for="fechaN" class="form-label">Fecha nacimiento</label>
-                            <input type="date" id="fechaN" name="fechaN" class="form-control">
-                            <label for="correo" class="form-label">Correo electrónico</label>
-                            <input type="email" id="correo" name="correo" class="form-control">
-                            <label for="contraseña" class="form-label">Contraseña</label>
-                            <input type="password" id="contraseña" name="contraseña" class="form-control">
-                            <label for="confirmacion" class="form-label">Confirmación de contraseña</label>
-                            <input type="password" id="confirmacion" name="confirmacion" class="form-control">
+                        <form id="registerForm">
+                            <label for="userName" class="form-label">Nombre de usuario</label>
+                            <input type="text" id="userName" class="form-control">
+                            <label for="email" class="form-label">Correo electrónico</label>
+                            <input type="email" id="email"class="form-control">
+                            <label for="password" class="form-label">Contraseña</label>
+                            <input type="password" id="password" class="form-control">
+                            <label for="pwdconfirmation" class="form-label">Confirmación de contraseña</label>
+                            <input type="password" id="pwdconfirmation" class="form-control">
+                            <label for="role" class="form-label">Rol de usuario</label>
+                            <select id="role">
+                                <option value="reader" class="form-select">Lector</option>
+                                <option value="writer" class="form-select">Escritor</option>
+                            </select>
                             <br>
                             <div class="text-center">
-                                <input type="submit" id="crearUsuario" name="crearUsuario" value="Crear usuario" class="btn btn-secondary">
+                                <input type="submit" id="crearUsuario" value="Crear usuario" class="btn btn-secondary" onsubmit="createUser(event);">
                             </div>
                         </form>
                     </div>
