@@ -7,15 +7,13 @@ function cargarPrincipal(){
     window.localStorage.removeItem("E-tag");
     let logeado = JSON.parse(window.localStorage.getItem("login"));
     if(logeado){
+        mostrarReader();
         if(esWriter(logeado))
             mostrarWriter();
-        cargarPersonas(logeado);
-        cargarProductos(logeado);
-        cargarEntidades(logeado);
-        crearBotonLogout();
     }
     else{
-        ocultarWriter(); 
+        ocultarWriter();
+        ocultarReader();
     }
 }
 
@@ -29,16 +27,15 @@ function onLogin(event){
         $("#form-login").serialize(),
         null
         ).success(function (data, textStatus, request) {
+            let usrname = document.getElementById("form-login").username.value;
             // => show scopes, users, products, ...
             authHeader = request.getResponseHeader('Authorization');
             window.localStorage.setItem("login", JSON.stringify(authHeader)); 
-            crearBotonLogout();
+            window.localStorage.setItem("usrname", usrname); 
+            mostrarReader();
             if(esWriter(authHeader)){
                 mostrarWriter();
             }
-            cargarPersonas(authHeader);
-            cargarProductos(authHeader);
-            cargarEntidades(authHeader);
         }).fail(function (xhr) {
             if (xhr.responseJSON && xhr.responseJSON.message) {
                 message = xhr.responseJSON.message;
@@ -60,6 +57,7 @@ function onLogout(event, button){
     event.preventDefault();
     window.localStorage.removeItem("login");
     ocultarWriter();
+    ocultarReader();
 }
 
 function crearBotonLogout(){
@@ -132,28 +130,84 @@ function crearPwddiv(div){
     div.appendChild(pd);
 }
 
-function ocultarWriter(){
+function ocultarReader(){
+    window.localStorage.removeItem("usrname");
     let botonLogout = document.getElementById("logout");
     if(botonLogout)
         botonLogout.remove();
-    let botones = document.getElementsByClassName("btn btn-secondary");
-    for(b of botones){
-        b.style.display = "none";
+    let htmlusername = document.getElementById("htmlusername");
+    if(htmlusername)
+        htmlusername.remove();
+    if(document.URL.includes("/inicio.html")){
+        ocultarContenido();
     }
     crearFormularioLogin();
 }
 
-function mostrarWriter(){
+function ocultarWriter(){
+    if(document.URL.includes("/inicio.html")){
+        let registro = document.getElementById("registro");
+        registro.remove();
+    }
+    let botones = document.getElementsByClassName("btn btn-secondary");
+    for(b of botones){
+        b.style.display = "none";
+    }
+}
+
+function mostrarReader(){
     let form = document.getElementById("form-login");
     if(form)
         form.remove();
-    let registro = document.getElementById("registro");
+    let div = document.getElementById("contenedorLogin").firstElementChild;
+    let htmlusername = document.createElement("p");
+    let usrname = window.localStorage.getItem("usrname");
+    htmlusername.innerHTML = "Usuario:  " + usrname;
+    htmlusername.setAttribute("id", "htmlusername");
+    div.appendChild(htmlusername);
+    if(document.URL.includes("/inicio.html")){
+        cargarPersonas(logeado);
+        cargarProductos(logeado);
+        cargarEntidades(logeado);
+    }
+    crearBotonLogout();
+}
+
+function mostrarWriter(){
+    /*let registro = document.getElementById("registro");
     if(registro)
-        registro.remove();
+        registro.remove();*/
+    if(document.URL.includes("/inicio.html")){
+        crearBotonRegistro();
+        crearBotonGestionUsuarios();
+    }
     let botones = document.getElementsByClassName("btn btn-secondary");
     for(b of botones){
         b.style.display = "block";
     }
+}
+
+function ocultarContenido(){
+    let persons = document.getElementById("divPer");
+    let products = document.getElementById("divProd");
+    let entities = document.getElementById("divEnt");
+    while (persons.firstChild){    
+        persons.removeChild(persons.firstChild);
+    }
+    while (products.firstChild){    
+        products.removeChild(products.firstChild);
+    }
+    while (entities.firstChild){    
+        entities.removeChild(entities.firstChild);
+    }
+}
+
+function elementoACrear(tipo){
+    window.localStorage.setItem("elementType", tipo);
+}
+
+function borrarLogin(){
+    window.localStorage.removeItem("login");
 }
 
 //  Carga elementos
@@ -305,12 +359,13 @@ function verElementoEnlazado(event){
 function cargarPagDetalles(){
     let logeado = JSON.parse(window.localStorage.getItem("login"));
     if(logeado){
+        mostrarReader();
         mostrarWriter();
         cargarElementoDetalles(logeado);
     }
     else{
+        ocultarReader();
         ocultarWriter();
-        //mensaje: login para ver elemento
     }
 }
 
@@ -577,14 +632,6 @@ function setEditar(event){
     }
 }
 
-function borrarLogin(){
-    window.localStorage.removeItem("login");
-}
-
-function elementoACrear(tipo){
-    window.localStorage.setItem("elementType", tipo);
-}
-
 function updateElement(event){
     let formulario = document.getElementById("formularioEdicion");
     event.preventDefault();
@@ -740,6 +787,7 @@ function colocarProductosRelacionados(div){
 }
 
 function createUser(event){
+    event.preventDefault();
     let authHeader = JSON.parse(window.localStorage.getItem("login"));
     let form = document.getElementById("registerForm");
     if(form.password.value === form.pwdconfirmation.value){
@@ -768,7 +816,6 @@ function crearBotonRegistro(){
     let registro = document.createElement("a");
     registro.setAttribute("id", "registro");
     registro.setAttribute("class", "btn btn-secondary");
-    registro.setAttribute("role", "button");
     registro.setAttribute("href", "./registro.html");
     registro.innerHTML = "Crear usuario";
     div.appendChild(registro);
@@ -779,25 +826,31 @@ function crearBotonGestionUsuarios(){
     let gestion = document.createElement("a");
     gestion.setAttribute("id", "registro");
     gestion.setAttribute("class", "btn btn-secondary");
-    gestion.setAttribute("role", "button");
     gestion.setAttribute("href", "./gestionUsuarios.html");
     gestion.innerHTML = "Gestionar usuarios";
     div.appendChild(gestion);
 }
 
 function loadUsers(){
-    let authHeader = JSON.parse(window.localStorage.getItem("login"));
+    let logeado = JSON.parse(window.localStorage.getItem("login"));
+    if(logeado){
+        mostrarReader();
+        mostrarWriter();
+    }
+    else{
+        ocultarReader();
+        ocultarWriter();
+    }
     let div = document.getElementById("users");
     $.ajax({
         type: "GET",
         url: '/api/v1/users',
-        headers: {"Authorization": authHeader},
+        headers: {"Authorization": logeado},
         // dataType: 'json',
         success: function (data) {
-            alert(JSON.stringify(data));
             for(user in data.users){
-                alert(JSON.stringify(user));
-                showUser(div, user);
+                showUser(div, data.users[user].user);
+                div.innerHTML += "<br>";
             }
         }
     })
@@ -810,7 +863,7 @@ function showUser(div, user){
     let contenido = document.createElement("div");
     contenido.setAttribute("class", "card-body text-center");
     contenido.setAttribute("data-id", user.id);
-    contenido.setAttribute("data-type", "user");
+    contenido.setAttribute("data-type", "users");
     contenedor.appendChild(contenido);
     let nombre = document.createElement("p");
     nombre.innerHTML = user.username;
@@ -821,5 +874,10 @@ function showUser(div, user){
     let role = document.createElement("p");
     role.innerHTML = user.role;
     contenido.appendChild(role);
-    crearBotonEliminar(contenedor);
+    let botones = document.createElement("div");
+    botones.setAttribute("class", "btn-group");
+    botones.setAttribute("role", "group");
+    botones.setAttribute("aria-label", "botones");
+    contenedor.appendChild(botones);
+    crearBotonEliminar(botones);
 }
