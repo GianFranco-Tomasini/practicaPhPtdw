@@ -147,7 +147,8 @@ function ocultarReader(){
 function ocultarWriter(){
     if(document.URL.includes("/inicio.html")){
         let registro = document.getElementById("registro");
-        registro.remove();
+        if(registro)
+            registro.remove();
     }
     let botones = document.getElementsByClassName("btn btn-secondary");
     for(b of botones){
