@@ -199,7 +199,8 @@ class UserController
                 $req_data['username'],
                 $req_data['email'],
                 $req_data['password'],
-                $req_data['role'] ?? Role::ROLE_READER
+                $req_data['role'] ?? Role::ROLE_READER,
+                $req_data['validation'] ?? false
             );
         } catch (Throwable) {    // 400 BAD REQUEST: Unexpected role
             return Error::error($response, StatusCode::STATUS_BAD_REQUEST);
@@ -275,6 +276,11 @@ class UserController
             } catch (Throwable) {    // 400 BAD_REQUEST: unexpected role
                 return Error::error($response, StatusCode::STATUS_BAD_REQUEST);
             }
+        }
+
+        // validation
+        if (isset($req_data['validation'])) {
+            $user->setValidation($req_data['validation']);
         }
 
         $this->entityManager->flush();

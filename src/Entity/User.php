@@ -80,12 +80,23 @@ class User implements JsonSerializable
     protected Role $role;
 
     /**
+     * @ORM\Column(
+     *     name     = "validation",
+     *     type     = "boolean",
+     *     unique   = false,
+     *     nullable = false
+     *     )
+     */
+    protected bool $validation;
+
+    /**
      * User constructor.
      *
      * @param string $username username
      * @param string $email email
      * @param string $password password
      * @param string $role Role::ROLE_READER | Role::ROLE_WRITER
+     * @param boolean $validation validation
      *
      * @throws UnexpectedValueException
      */
@@ -93,7 +104,8 @@ class User implements JsonSerializable
         string $username = '',
         string $email = '',
         string $password = '',
-        string $role = Role::ROLE_READER
+        string $role = Role::ROLE_READER,
+        string $validation = ''
     ) {
         $this->id       = 0;
         $this->username = $username;
@@ -104,6 +116,7 @@ class User implements JsonSerializable
         } catch (UnexpectedValueException) {
             throw new UnexpectedValueException('Unexpected Role');
         }
+        $this->validation = $validation;
     }
 
     /**
@@ -211,6 +224,30 @@ class User implements JsonSerializable
     }
 
     /**
+     * @return bool
+     */
+    public function getValidation(): bool
+    {
+        return $this->validation;
+    }
+
+    /**
+     * @param bool $validation validation
+     * @return User
+     */
+    public function setValidation(bool $validation): self
+    {
+        $this->validation = $validation;
+        return $this;
+    }
+
+    public function validationToString(): string
+    {
+        $string = $this->validation ? 'true' : 'false';
+        return $string;
+    }
+
+    /**
      * Verifies that the given hash matches the user password.
      *
      * @param string $password password
@@ -231,12 +268,13 @@ class User implements JsonSerializable
     {
         return
             sprintf(
-                '[%s: (id=%04d, username="%s", email="%s", role="%s")]',
+                '[%s: (id=%04d, username="%s", email="%s", role="%s", validation="%s)]',
                 basename(self::class),
                 $this->getId(),
                 $this->getUsername(),
                 $this->getEmail(),
-                $this->role
+                $this->role,
+                $this->validationToString()
             );
     }
 
@@ -255,6 +293,7 @@ class User implements JsonSerializable
                 'username' => $this->getUsername(),
                 'email' => $this->getEmail(),
                 'role' => $this->role->__toString(),
+                'validation' => $this->validationToString(),
             ]
         ];
     }
