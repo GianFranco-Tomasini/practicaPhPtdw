@@ -147,8 +147,11 @@ function ocultarReader(){
 function ocultarWriter(){
     if(document.URL.includes("/inicio.html")){
         let registro = document.getElementById("registro");
+        let gestionUsuarios = document.getElementById("gestionUsuarios");
         if(registro)
             registro.remove();
+        if(gestionUsuarios)
+            gestionUsuarios.remove();
     }
     let botones = document.getElementsByClassName("btn btn-secondary");
     for(b of botones){
@@ -825,7 +828,7 @@ function crearBotonRegistro(){
 function crearBotonGestionUsuarios(){
     let div = document.getElementById("usuarios")
     let gestion = document.createElement("a");
-    gestion.setAttribute("id", "registro");
+    gestion.setAttribute("id", "gestionUsuarios");
     gestion.setAttribute("class", "btn btn-secondary");
     gestion.setAttribute("href", "./gestionUsuarios.html");
     gestion.innerHTML = "Gestionar usuarios";
