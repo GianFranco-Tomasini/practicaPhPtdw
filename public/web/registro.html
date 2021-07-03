@@ -9,38 +9,27 @@
         <script type="text/javascript" src="./javascript.js"></script>
         <title>Anales de la ciencia</title>
     </head>
-    <body">
+    <body onLoad="cargarRegistro();">
         <header>
             <div class="text-center">
                 <h1>Anales de la ciencia</h1>
                 <a id="homebutton" class="btn btn-primary" href="./inicio.html" role="button">Volver</a>
                 <br>
             </div>
+            <div class="card" id="tarjetalogin">
+                <div class="card-body" id="contenedorLogin">
+                    <fieldset>
+                        <legend>Login</legend>
+                    </fieldset>
+                </div>
+            </div>
         </header>
         <main>
+            <br>
             <div class="container">
                 <div class="card">
                     <div class="card-body" id="contenedorFormulario">
-                        <h2 class="text-center">Registro</h2>
-                        <form id="registerForm">
-                            <label for="userName" class="form-label">Nombre de usuario</label>
-                            <input type="text" id="userName" class="form-control">
-                            <label for="email" class="form-label">Correo electrónico</label>
-                            <input type="email" id="email"class="form-control">
-                            <label for="password" class="form-label">Contraseña</label>
-                            <input type="password" id="password" class="form-control">
-                            <label for="pwdconfirmation" class="form-label">Confirmación de contraseña</label>
-                            <input type="password" id="pwdconfirmation" class="form-control">
-                            <label for="role" class="form-label">Rol de usuario</label>
-                            <select id="role">
-                                <option value="reader" class="form-select">Lector</option>
-                                <option value="writer" class="form-select">Escritor</option>
-                            </select>
-                            <br>
-                            <div class="text-center">
-                                <input type="submit" id="crearUsuario" value="Crear usuario" class="btn btn-secondary" onsubmit="createUser(event);">
-                            </div>
-                        </form>
+                        
                     </div>
                 </div>
             </div>

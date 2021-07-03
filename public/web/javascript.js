@@ -15,6 +15,7 @@ function cargarPrincipal(){
         ocultarWriter();
         ocultarReader();
     }
+    crearBotonRegistro();
 }
 
 // Login, Logout, permisos
@@ -146,10 +147,7 @@ function ocultarReader(){
 
 function ocultarWriter(){
     if(document.URL.includes("/inicio.html")){
-        let registro = document.getElementById("registro");
         let gestionUsuarios = document.getElementById("gestionUsuarios");
-        if(registro)
-            registro.remove();
         if(gestionUsuarios)
             gestionUsuarios.remove();
     }
@@ -178,11 +176,7 @@ function mostrarReader(){
 }
 
 function mostrarWriter(){
-    /*let registro = document.getElementById("registro");
-    if(registro)
-        registro.remove();*/
     if(document.URL.includes("/inicio.html")){
-        crearBotonRegistro();
         crearBotonGestionUsuarios();
     }
     let botones = document.getElementsByClassName("btn btn-secondary");
@@ -620,7 +614,7 @@ function editarElemento(){
     let tipoElemento = window.localStorage.getItem("elementType");
     let idElemento = window.localStorage.getItem("elementId");
     getElementToEdit(tipoElemento, idElemento, logeado);
-    botonActualizar = document.getElementById("submitElemento");
+    let botonActualizar = document.getElementById("submitElemento");
     botonActualizar.setAttribute("value", "Actualizar");
     botonActualizar.setAttribute("onclick", "updateElement(event)");
     let form = document.getElementById("formularioEdicion");
@@ -633,6 +627,10 @@ function setEditar(event){
         let nodo = event.target.parentNode.parentNode.firstElementChild;
         window.localStorage.setItem("elementId", nodo.getAttribute("data-id"));
         window.localStorage.setItem("elementType", nodo.getAttribute("data-type"));
+    }
+    else if(document.URL.includes("/gestionUsuarios.html")){
+        let usuario = event.target.parentNode.parentNode.firstElementChild;
+        window.localStorage.setItem("elementId", usuario.getAttribute("data-id"));;
     }
 }
 
@@ -655,7 +653,7 @@ function updateElement(event){
     $.ajax({
         type: "PUT",
         url: '/api/v1/' + elementType + '/' + elementId,
-        headers: {"Authorization": authHeader, "etag": e_tag},
+        headers: {"Authorization": authHeader, "If-Match": e_tag},
         data: element,
         // dataType: 'json',
         error: function (data) {
@@ -790,22 +788,28 @@ function colocarProductosRelacionados(div){
     })
 }
 
-function createUser(event){
+function createUser(event, form){
     event.preventDefault();
     let authHeader = JSON.parse(window.localStorage.getItem("login"));
-    let form = document.getElementById("registerForm");
     if(form.password.value === form.pwdconfirmation.value){
         let user = {
             "username": form.username.value,
             "email": form.email.value,
             "password": form.password.value,
-            "role": form.role.value
+            "role": form.role.value,
+            "validation": "0"
         }
         $.ajax({
             type: "POST",
             url: '/api/v1/users',
             headers: {"Authorization": authHeader},
-            data: user
+            data: user,
+            success: function(){
+                form.reset();
+            },
+            error: function(){
+                alert("Error al crear");
+            }
         })
     }
     else{
@@ -819,7 +823,8 @@ function crearBotonRegistro(){
     let div = document.getElementById("usuarios")
     let registro = document.createElement("a");
     registro.setAttribute("id", "registro");
-    registro.setAttribute("class", "btn btn-secondary");
+    registro.setAttribute("class", "btn btn-primary");
+    registro.setAttribute("stlye", "display: inline-block;");
     registro.setAttribute("href", "./registro.html");
     registro.innerHTML = "Crear usuario";
     div.appendChild(registro);
@@ -829,7 +834,7 @@ function crearBotonGestionUsuarios(){
     let div = document.getElementById("usuarios")
     let gestion = document.createElement("a");
     gestion.setAttribute("id", "gestionUsuarios");
-    gestion.setAttribute("class", "btn btn-secondary");
+    gestion.setAttribute("class", "btn btn-primary");
     gestion.setAttribute("href", "./gestionUsuarios.html");
     gestion.innerHTML = "Gestionar usuarios";
     div.appendChild(gestion);
@@ -870,18 +875,175 @@ function showUser(div, user){
     contenido.setAttribute("data-type", "users");
     contenedor.appendChild(contenido);
     let nombre = document.createElement("p");
-    nombre.innerHTML = user.username;
+    nombre.setAttribute("data-id", user.username);
+    nombre.innerHTML = "Nombre: " + user.username;
     contenido.appendChild(nombre);
     let email = document.createElement("p");
-    email.innerHTML = user.email;
+    email.innerHTML = "Email: " + user.email;
     contenido.appendChild(email);
     let role = document.createElement("p");
-    role.innerHTML = user.role;
+    role.innerHTML = "Rol: " + user.role;
     contenido.appendChild(role);
+    let validation = document.createElement("p");
+    validation.innerHTML = "Validación: " + user.validation;
+    contenido.appendChild(validation);
     let botones = document.createElement("div");
     botones.setAttribute("class", "btn-group");
     botones.setAttribute("role", "group");
     botones.setAttribute("aria-label", "botones");
     contenedor.appendChild(botones);
     crearBotonEliminar(botones);
+    crearBotonEditarUsuario(botones);
+}
+
+function crearBotonEditarUsuario(div){
+    let botonEditar = document.createElement("a");
+    botonEditar.setAttribute("class", "btn btn-secondary");
+    botonEditar.setAttribute("href", "./registro.html");
+    botonEditar.setAttribute("onclick", "setEditar(event);");
+    botonEditar.innerHTML = "Editar";
+    div.appendChild(botonEditar);
+}
+
+function cargarRegistro(){
+    let logeado = JSON.parse(window.localStorage.getItem("login"));
+    let editar = JSON.parse(window.localStorage.getItem("editar"));
+    if(logeado){
+        mostrarReader();
+        mostrarWriter();
+    }
+    else{
+        ocultarReader();
+        ocultarWriter();
+    }
+    crearFormularioRegistro();
+    if(editar){
+        editarUsuario(logeado);
+    }
+}
+
+function crearFormularioRegistro(){
+    let div = document.getElementById("contenedorFormulario");
+    let formulario = document.createElement("form");
+    formulario.setAttribute("id", "registerForm");
+    formulario.setAttribute("onsubmit", "createUser(event, this)");
+    let titulo = document.createElement("h3");
+    titulo.setAttribute("class", "text-center");
+    titulo.innerHTML = "Registro";
+    div.appendChild(titulo);
+    let divInputs = document.createElement("div");
+    divInputs.setAttribute("id", "divInputs");
+    formulario.appendChild(divInputs);
+    let divBotones = document.createElement("div");
+    divBotones.setAttribute("class", "text-center");
+    crearBotonesFormulario(divBotones);
+    formulario.appendChild(divBotones);
+    crearInput(divInputs, "username", "Nombre de usuario", "text");
+    crearInput(divInputs, "email", "Correo electrónico", "email");
+    crearInput(divInputs, "password", "Contraseña", "password");
+    crearInput(divInputs, "pwdconfirmation", "Confirmación de contraseña", "password");
+    crearOpcionRol(divInputs);
+    div.appendChild(formulario);
+}
+
+function crearOpcionRol(div){
+    let label = document.createElement("label");
+    label.setAttribute("for", "role");
+    label.setAttribute("class", "form-label");
+    label.innerHTML = "Rol de usuario";
+    div.appendChild(label);
+    div.innerHTML += "<br>";
+    let select = document.createElement("select");
+    select.setAttribute("id", "role");
+    let opcionReader = document.createElement("option");
+    opcionReader.setAttribute("value", "reader");
+    opcionReader.setAttribute("class", "form-select");
+    opcionReader.innerHTML = "Lector";
+    let opcionWriter = document.createElement("option");
+    opcionWriter.setAttribute("value", "writer");
+    opcionWriter.setAttribute("class", "form-select");
+    opcionWriter.innerHTML = "Escritor";
+    select.appendChild(opcionReader);
+    select.appendChild(opcionWriter);
+    div.appendChild(select);
+    div.innerHTML += "<br>";
+}
+
+function editarUsuario(authHeader){
+    let elementId = JSON.parse(window.localStorage.getItem("elementId"));
+    let jqXHR = $.ajax({
+        type: "GET",
+        url: '/api/v1/users/' + elementId,
+        headers: {"Authorization": authHeader},
+        // dataType: 'json',
+        success: function (data) {
+            window.localStorage.setItem("E-tag", JSON.stringify(jqXHR.getResponseHeader('etag')));
+            let elemento = data[Object.keys(data)[0]];
+            let form = document.getElementById("registerForm");
+            form.parentElement.firstElementChild.innerHTML = "Editar usuario '" + elemento.username + "'";
+            form.setAttribute("onsubmit", "updateUser(event, this);");
+            crearOpcionValidacion(form.firstChild);
+            document.getElementById("username").setAttribute("value", elemento.username);
+            document.getElementById("email").setAttribute("value", elemento.email);
+            //document.getElementById("role").setAttribute("value", elemento.role);
+            //document.getElementById("validation").setAttribute("value", elemento.validation);
+        },
+        error: function(){
+            alert("Error al cargar el usuario a editar");
+        }
+    })
+    let boton = document.getElementById("submitElemento");
+    boton.innerHTML = "Actualizar";
+}
+
+function crearOpcionValidacion(div){
+    let label = document.createElement("label");
+    label.setAttribute("for", "validation");
+    label.setAttribute("class", "form-label");
+    label.innerHTML = "Validación";
+    div.appendChild(label);
+    div.innerHTML += "<br>";
+    let select = document.createElement("select");
+    select.setAttribute("id", "validation");
+    let opcionFalse = document.createElement("option");
+    opcionFalse.setAttribute("value", false);
+    opcionFalse.setAttribute("class", "form-select");
+    opcionFalse.innerHTML = "Falso";
+    let opcionTrue = document.createElement("option");
+    opcionTrue.setAttribute("value", true);
+    opcionTrue.setAttribute("class", "form-select");
+    opcionTrue.innerHTML = "Verdadero";
+    select.appendChild(opcionTrue);
+    select.appendChild(opcionFalse);
+    div.appendChild(select);
+    div.innerHTML += "<br>";
+}
+
+function updateUser(event, form){
+    event.preventDefault();
+    if(form.password.value === form.pwdconfirmation.value){
+        let authHeader = JSON.parse(window.localStorage.getItem("login"));
+        let e_tag = JSON.parse(window.localStorage.getItem("E-tag"));
+        let elementId = window.localStorage.getItem("elementId");
+        let element = {
+            "username": form.username.value,
+            "email": form.email.value,
+            "password": form.password.value,
+            "role": form.role.value,
+            "validation": form.validation.value,
+        }
+        $.ajax({
+            type: "PUT",
+            url: '/api/v1/users/' + elementId,
+            headers: {"Authorization": authHeader, "If-Match": e_tag},
+            data: element,
+            // dataType: 'json',
+            error: function (data) {
+                alert("Error al actualizar\n" + JSON.stringify(data));
+            }
+        })
+    }
+    else{
+        alert("Las contraseñas no coinciden");
+    }
 }
