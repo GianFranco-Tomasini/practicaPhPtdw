@@ -172,9 +172,9 @@ class UserController
      */
     public function post(Request $request, Response $response): Response
     {
-        if (!$this->checkWriterScope($request)) { // 403
+        /*if (!$this->checkWriterScope($request)) { // 403
             return Error::error($response, StatusCode::STATUS_FORBIDDEN);
-        }
+        }*/
 
         $req_data
             = $request->getParsedBody() ?? json_decode($request->getBody(), true) ?? [];
